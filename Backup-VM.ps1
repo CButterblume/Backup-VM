@@ -64,12 +64,11 @@ Give examples using any and all parameters and pipe inputs (if any) that the fun
 
 Param(
     [Parameter(Mandatory = $true)]
-    [string] $HVhost,
-    [Parameter(Mandatory = $true)]
+    [array] $HVhost,
     [string] $VM,
     [Parameter(Mandatory = $true)]
     [string] $ExportPath,
-    [string] $Logpath = '${env:homedrive}\windows\Logs\HyperVBackup',
+    [string] $Logpath = "${env:homedrive}\windows\Logs\HyperVBackup",
     [switch] $ProductionCheckpoint
 )
 
@@ -101,7 +100,7 @@ Start-Transcript -Path $LogFile -Append
 
 # List of VM to be exported
 
-if($VM -eq ""){
+if(!$VM){
     Write-Host -ForegroundColor Yellow (Get-Date) "No VM specified. Exporting all VMs on host(s): $HVhost"
     $VMlist = Get-VM -ComputerName $HVhost
 }
@@ -115,7 +114,7 @@ else{
 
 if($ProductionCheckpoint -match "true"){
 
-    Foreach($VMEntry in $VMlist){
+    Foreach($VMEntry in $VMlist.Name){
 
         $SnapshotName = "BackupCheckpoint_$Logdate"
         Write-Host -ForegroundColor Green (Get-Date) "### Creating Checkpoint. ###"
@@ -138,7 +137,7 @@ if($ProductionCheckpoint -match "true"){
 }
 else{
 
-    Foreach($VMEntry in $VMlist){
+    Foreach($VMEntry in $VMlist.Name){
 
         Write-Host -ForegroundColor Green (Get-Date)"### Exporting VM(s) online. ###"
          $DestinationPathExists = Test-Path $ExportPath\$VMEntry
