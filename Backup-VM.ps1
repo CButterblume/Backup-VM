@@ -76,17 +76,17 @@ Param(
 
 
 # region Logging
-$LogDate = Get-Date -Format YYYY-MM-DD 
+$LogDate = Get-Date -Format yyyy-MM-dd 
 $LogPathExists = Test-Path $Logpath
 if(!$LogPathExists){
 
     New-Item -Path $Logpath -ItemType "directory"
     Write-Host "No Log directory found. Creating Log directory in $Logpath"
-    $LogFile = $Logpath\$Logdate.log
+    $LogFile = "$Logpath\$Logdate.log"
 }
 else{
     Write-Host "Log directory found."
-    $Logfile = $Logpath\$Logdate.log
+    $Logfile = "$Logpath\$Logdate.log"
 }
 # endregion
 
