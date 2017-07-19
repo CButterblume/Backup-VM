@@ -52,14 +52,14 @@ DateCreated: 19.07.2017
    
 
 .EXAMPLE    
+Export all virtual machines on a given Hyper-V host:
 
-Show how to invoke the function with the desired syntax
-
+backup-vm.ps1 -HVHost TestHVHost01 -ExportPath C:\VMBackup
 
 .EXAMPLE    
+Export a specific virtaul machine on a given host with production checkpoint
 
-Give examples using any and all parameters and pipe inputs (if any) that the function will accept
-
+backup-vm.ps1 -HVHost TestHVHost01 -VM TestVM02 -ExportPath C:\VMBackup
 #>
 Param(
     [Parameter(Mandatory = $true)]
