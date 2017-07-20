@@ -52,19 +52,21 @@ DateCreated: 19.07.2017
    
 
 .EXAMPLE    
-Export all virtual machines on a given Hyper-V host:
+
+Export all virtual machines on a given Hyper-V host
 
 backup-vm.ps1 -HVHost TestHVHost01 -ExportPath C:\VMBackup
 
 .EXAMPLE    
-Export a specific virtaul machine on a given host with production checkpoint
 
-backup-vm.ps1 -HVHost TestHVHost01 -VM TestVM02 -ExportPath C:\VMBackup
+Export a specific virtual machine on a given host with utilizing a production checkpoint
+
+backup-vm.ps1 -HVHost TestHVHost01 -VM TestVM02 -ExportPath C:\VMBackup -ProductionCheckpoint
 #>
 Param(
     [Parameter(Mandatory = $true)]
     [array] $HVhost,
-    [string] $VM,
+    [array] $VM,
     [Parameter(Mandatory = $true)]
     [string] $ExportPath,
     [string] $Logpath = "${env:homedrive}\windows\Logs\HyperVBackup",
@@ -72,19 +74,18 @@ Param(
 )
 
 
-
+$Date = Get-Date -Format "ddMMyyyy_HHmmss"
 # region Logging
-$LogDate = Get-Date -Format yyyy-MM-dd 
 $LogPathExists = Test-Path $Logpath
 if(!$LogPathExists){
 
     New-Item -Path $Logpath -ItemType "directory"
     Write-Host "No Log directory found. Creating Log directory in $Logpath"
-    $LogFile = "$Logpath\$Logdate.log"
+    $LogFile = "$Logpath\$Date.log"
 }
 else{
     Write-Host "Log directory found."
-    $Logfile = "$Logpath\$Logdate.log"
+    $Logfile = "$Logpath\$Date.log"
 }
 # endregion
 
@@ -99,36 +100,44 @@ Start-Transcript -Path $LogFile -Append
 
 # List of VM to be exported
 
+$VMlist = @()
+
 if(!$VM){
     Write-Host -ForegroundColor Yellow (Get-Date) "No VM specified. Exporting all VMs on host(s): $HVhost"
     $VMlist = Get-VM -ComputerName $HVhost
 }
+elseif($VM.Count -gt 1){
+    Write-Host -ForegroundColor Yellow (Get-Date) "The following VM(s) are going to be exported: $VM"
+    Foreach($m in $VM){
+
+        $VMName = Get-VM -ComputerName $HVHost|Where-Object {$_.Name -contains $m}
+        $VMlist += $VMName
+    }
+}
 else{
     Write-Host -ForegroundColor Yellow (Get-Date) "The following VM(s) are going to be exported: $VM"
-    $VMlist = $VM
+    $VMlist = Get-VM -ComputerName $HVhost|Where-Object {$_.Name -eq $VM}
 }
 
-
 # region Export
-
 if($ProductionCheckpoint -match "true"){
 
     Foreach($VMEntry in $VMlist.Name){
 
+        $FullExportPath = "$ExportPath\$VMEntry_$Date"
+
         $SnapshotName = "BackupCheckpoint_$Logdate"
-        Write-Host -ForegroundColor Green (Get-Date) "### Creating Checkpoint. ###"
-        $DestinationPathExists = Test-Path $ExportPath\$VMEntry
-        if($DestinationPathExists -eq $False){ 
-           
+        Write-Host -ForegroundColor Green (Get-Date) "### Creating Checkpoint for VM: $VMEntry. ###"
+        $DestinationPathExists = Test-Path $FullExportPath
+        if($DestinationPathExists -eq $False){            
             Checkpoint-VM -Name $VMEntry -SnapshotName $SnapshotName -verbose
-            Export-VMSnapshot -VMName $VMEntry -Name $SnapshotName -Path $ExportPath -verbose
+            Export-VMSnapshot -VMName $VMEntry -Name $SnapshotName -Path $FullExportPath -verbose
             Remove-VMSnapshot -VMName $VMEntry -Name $SnapshotName -verbose
         }
-        else{ 
-            
-            Remove-Item -Recurse -Force $Exportpath\$VMEntry -verbose
+        else{             
+            Remove-Item -Recurse -Force $FullExportPath -verbose
             Checkpoint-VM -Name $VMEntry -SnapshotName $SnapshotName -verbose
-            Export-VMSnapshot -VMName $VMEntry -Name $SnapshotName -Path $ExportPath -verbose
+            Export-VMSnapshot -VMName $VMEntry -Name $SnapshotName -Path $FullExportPath -verbose
             Remove-VMSnapshot -VMName $VMEntry -Name $SnapshotName -verbose
         }
         Write-Host -ForegroundColor Green (Get-Date) "### Export of $VMEntry concluded. ###"
@@ -138,14 +147,16 @@ else{
 
     Foreach($VMEntry in $VMlist.Name){
 
-        Write-Host -ForegroundColor Green (Get-Date)"### Exporting VM(s) online. ###"
-         $DestinationPathExists = Test-Path $ExportPath\$VMEntry
+        $FullExportPath = "$ExportPath\$VMEntry_$Date"
+
+        Write-Host -ForegroundColor Green (Get-Date)"### Onlineexport VM: $VMEntry. ###"
+         $DestinationPathExists = Test-Path $FullExportPath
         if($DestinationPathExists -eq $False){
-            Export-VM -Name $VMEntry -Path $Exportpath -verbose
+            Export-VM -Name $VMEntry -Path $FullExportPath -verbose
         }
         else{
-             Remove-Item -Recurse -Force $Exportpath\$VMEntry -verbose
-             Export-VM -Name $VMEntry -Path $Exportpath -verbose
+             Remove-Item -Recurse -Force $FullExportPath -verbose
+             Export-VM -Name $VMEntry -Path $FullExportPath -verbose
         }
         Write-Host -ForegroundColor Green (Get-Date) "### Export of $VMEntry concluded. ###"
     }
