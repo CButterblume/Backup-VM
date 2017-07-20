@@ -75,6 +75,7 @@ Param(
 
 
 $Date = Get-Date -Format "ddMMyyyy_HHmmss"
+
 # region Logging
 $LogPathExists = Test-Path $Logpath
 if(!$LogPathExists){
@@ -87,18 +88,15 @@ else{
     Write-Host "Log directory found."
     $Logfile = "$Logpath\$Date.log"
 }
-# endregion
 
 
 # Start Logging
 Start-Transcript -Path $LogFile -Append
+# endregion
 
 
-# Checking the Hosts
 
-##TODO: Check if Hosts are online
-
-# List of VM to be exported
+# region Export
 
 $VMlist = @()
 
@@ -119,7 +117,6 @@ else{
     $VMlist = Get-VM -ComputerName $HVhost|Where-Object {$_.Name -eq $VM}
 }
 
-# region Export
 if($ProductionCheckpoint -match "true"){
 
     Foreach($VMEntry in $VMlist.Name){
@@ -162,13 +159,3 @@ else{
     }
 }
 # endregion
-
-
-
-
-
-
-
-
-
-
