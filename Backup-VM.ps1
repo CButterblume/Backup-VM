@@ -121,9 +121,9 @@ if($ProductionCheckpoint -match "true"){
 
     Foreach($VMEntry in $VMlist.Name){
 
-        $FullExportPath = "$ExportPath\$VMEntry_$Date"
+        $FullExportPath = "$ExportPath\$VMEntry"
 
-        $SnapshotName = "BackupCheckpoint_$Logdate"
+        $SnapshotName = "BackupCheckpoint_$Date"
         Write-Host -ForegroundColor Green (Get-Date) "### Creating Checkpoint for VM: $VMEntry. ###"
         $DestinationPathExists = Test-Path $FullExportPath
         if($DestinationPathExists -eq $False){            
@@ -144,7 +144,7 @@ else{
 
     Foreach($VMEntry in $VMlist.Name){
 
-        $FullExportPath = "$ExportPath\$VMEntry_$Date"
+        $FullExportPath = "$ExportPath\$VMEntry"
 
         Write-Host -ForegroundColor Green (Get-Date)"### Onlineexport VM: $VMEntry. ###"
          $DestinationPathExists = Test-Path $FullExportPath
